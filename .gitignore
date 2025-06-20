@@ -54,3 +54,6 @@ yarn-error.log*
 # IDEs (optional)
 .idea/
 *.iml
+
+#extra
+curl_commands.txt
