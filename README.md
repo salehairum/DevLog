@@ -23,9 +23,12 @@ flask run
 ```
 
 ### Frontend
-To allow running the Vite Dev Server, run the following commands
+To install dependencies, run the following commands
 ```sh
 cd frontend
 npm install
+```
+To run,
+```sh
 npm run dev
 ```
