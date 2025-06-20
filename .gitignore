@@ -20,6 +20,7 @@
 
 # Flask instance folder
 /backend/instance/
+.env
 
 # Pytest cache
 /.pytest_cache/
