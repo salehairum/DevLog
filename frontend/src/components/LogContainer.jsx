@@ -47,6 +47,20 @@ export function LogContainer() {
         }
     };
 
+    const handleDeleteLog = async (logId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/logs/${logId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) throw new Error("Failed to delete log");
+
+            setLogs((prevLogs) => prevLogs.filter((log) => log._id !== logId));
+        } catch (err) {
+            console.error("Error deleting log:", err);
+        }
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-md w-1/2 flex flex-col p-6 max-h-[80vh]">
             {/* Header */}
@@ -67,12 +81,15 @@ export function LogContainer() {
                     logs.map((log) => (
                         <LogCard
                             key={log._id}
+                            id={log._id}
                             title={log.title}
                             project={log.project}
                             time_taken={log.time_taken}
                             date={log.date}
+                            onDelete={handleDeleteLog}
                         />
                     ))
+
                 )}
             </div>
         </div>
