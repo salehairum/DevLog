@@ -7,6 +7,7 @@ export function LogContainer() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [editingLogId, setEditingLogId] = useState(null);
 
     const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
@@ -61,6 +62,34 @@ export function LogContainer() {
         }
     };
 
+    const handleUpdateLog = async (logId, updatedLog) => {
+        const { title, project, time_taken } = updatedLog;
+
+        try {
+            const response = await fetch(`${BASE_URL}/logs/${logId}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ title, project, time_taken }),
+            });
+
+            if (!response.ok) throw new Error("Failed to update log");
+
+            // Optionally refetch the updated log or optimistically update it
+            const updated = await response.json();
+            setLogs((prevLogs) =>
+                prevLogs.map((log) =>
+                    log._id === logId ? { ...log, title, project, time_taken } : log
+                )
+            );
+            setEditingLogId(null); // Exit edit mode
+        } catch (err) {
+            console.error("Error updating log:", err);
+        }
+    };
+    
+
     return (
         <div className="bg-white rounded-xl shadow-md w-1/2 flex flex-col p-6 max-h-[80vh]">
             {/* Header */}
@@ -87,9 +116,12 @@ export function LogContainer() {
                             time_taken={log.time_taken}
                             date={log.date}
                             onDelete={handleDeleteLog}
+                            isEditing={editingLogId === log._id}
+                            onEdit={() => setEditingLogId(log._id)}
+                            onUpdate={handleUpdateLog}
+                            onCancelEdit={() => setEditingLogId(null)}
                         />
                     ))
-
                 )}
             </div>
         </div>

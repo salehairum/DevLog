@@ -218,8 +218,13 @@ def update_log(log_id):
             {"_id": ObjectId(log_id)},
             {"$set": updates}
         )
+
         if result.matched_count == 0:
             return jsonify({"error": "Log not found"}), 404
-        return jsonify({"message": "Log updated"}), 200
+
+        # Fetch and return the updated document
+        updated_log = logs_collection.find_one({"_id": ObjectId(log_id)})
+        return jsonify(serialize_log(updated_log)), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 400
