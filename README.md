@@ -10,7 +10,7 @@ pip install -r requirements.txt
 python app.py
 ```
 (Creating a venv is optional.)
-then, make sure to create a .env file (like the .env.example) and write your own connection string there.
+then, make sure to create a .env file (like the .env.example) and write your own connection string there. (in the backend folder)
 
 To run the backend, run the following command once
 ```sh
@@ -32,3 +32,4 @@ To run,
 ```sh
 npm run dev
 ```
+If your backend is running on a different port, modify it in the .env file in frontend folder.

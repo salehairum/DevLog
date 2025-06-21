@@ -4,6 +4,7 @@ from flask import request, jsonify
 from flask_cors import CORS
 from bson import ObjectId
 from flasgger import Swagger
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 
@@ -88,12 +89,18 @@ def create_log():
     """
     data = request.get_json()
 
-    required_fields = ['title', 'date', 'project', 'time_taken']
+    required_fields = ['title', 'project', 'time_taken']
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
+    data["date"] =datetime.now(timezone.utc).strftime("%Y-%m-%d")
     result = logs_collection.insert_one(data)
-    return jsonify({"message": "Log created", "id": str(result.inserted_id)}), 201
+
+    # Fetch the inserted document from MongoDB
+    created_log = logs_collection.find_one({"_id": result.inserted_id})
+    serialized_log = serialize_log(created_log)
+
+    return jsonify(serialized_log), 201
 
 @app.route('/logs/<log_id>', methods=['DELETE'])
 def delete_log(log_id):
