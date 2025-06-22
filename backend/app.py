@@ -150,9 +150,18 @@ def get_logs():
         user_uid = decoded_token['uid']
     except Exception as e:
         return jsonify({"error": "Invalid or expired token"}), 401
+    filters = {'user_id': user_uid}
 
+    project = request.args.get('project')
+    date = request.args.get('date')  
     
-    user_logs = list(logs_collection.find({"user_id": user_uid}))
+    if project:
+        filters['project'] = project
+    if date:
+        filters['date'] = date
+
+    # Fetch and serialize logs
+    user_logs = list(logs_collection.find(filters).sort('date', -1))
     serialized_logs = [serialize_log(log) for log in user_logs]
     return jsonify(serialized_logs), 200
 
