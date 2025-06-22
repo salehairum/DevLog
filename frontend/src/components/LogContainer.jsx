@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { LogCard } from "./LogCard";
 import { AddLogButton } from "./AddLogButton";
 import { AddLogForm } from "./AddLogForm";
+import { auth } from "../firebaseConfig";
 
 export function LogContainer() {
     const [logs, setLogs] = useState([]);
@@ -12,9 +13,22 @@ export function LogContainer() {
     const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
     const fetchLogs = async () => {
+
         try {
-            const response = await fetch(`${BASE_URL}/logs`);
+            const user = auth.currentUser;
+            if (!user) throw new Error("User not logged in");
+
+            const token = await user.getIdToken();
+
+            const response = await fetch(`${BASE_URL}/logs`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                }
+            });
+
             if (!response.ok) throw new Error("Failed to fetch logs");
+
             const data = await response.json();
             setLogs(data);
             console.log(data);
@@ -32,9 +46,17 @@ export function LogContainer() {
 
     const handleAddLog = async (newLog) => {
         try {
+            const user = auth.currentUser;
+            if (!user) throw new Error("User not logged in");
+
+            const token = await user.getIdToken();
+
             const response = await fetch(`${BASE_URL}/logs`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
                 body: JSON.stringify(newLog),
             });
 
@@ -50,8 +72,17 @@ export function LogContainer() {
 
     const handleDeleteLog = async (logId) => {
         try {
+            const user = auth.currentUser;
+            if (!user) throw new Error("User not logged in");
+
+            const token = await user.getIdToken();
+
             const response = await fetch(`${BASE_URL}/logs/${logId}`, {
                 method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) throw new Error("Failed to delete log");
@@ -66,10 +97,16 @@ export function LogContainer() {
         const { title, project, time_taken } = updatedLog;
 
         try {
+            const user = auth.currentUser;
+            if (!user) throw new Error("User not logged in");
+
+            const token = await user.getIdToken();
+
             const response = await fetch(`${BASE_URL}/logs/${logId}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
                 },
                 body: JSON.stringify({ title, project, time_taken }),
             });
@@ -88,7 +125,7 @@ export function LogContainer() {
             console.error("Error updating log:", err);
         }
     };
-    
+
 
     return (
         <div className="bg-white rounded-xl shadow-md w-1/2 flex flex-col p-6 max-h-[80vh]">

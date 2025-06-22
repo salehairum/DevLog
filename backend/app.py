@@ -35,6 +35,56 @@ def serialize_log(log):
 
 @app.route("/login", methods=["POST"])
 def login():
+    """
+    User login via Firebase ID token
+    ---
+    tags:
+      - Authentication
+    parameters:
+      - in: header
+        name: Authorization
+        required: true
+        description: Bearer Firebase ID token
+        schema:
+          type: string
+          example: "Bearer eyJhbGciOiJSUzI1NiIs..."
+    responses:
+      200:
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Login successful
+                user:
+                  type: object
+                  properties:
+                    uid:
+                      type: string
+                      example: abc123uid
+                    email:
+                      type: string
+                      example: user@example.com
+                    name:
+                      type: string
+                      example: John Doe
+      401:
+        description: Unauthorized or invalid token
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+                  example: Invalid token
+                details:
+                  type: string
+                  example: Token expired or malformed
+    """
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -54,6 +104,7 @@ def login():
 
     except Exception as e:
         return jsonify({"error": "Invalid token", "details": str(e)}), 401
+    
 @app.route('/logs', methods=['GET'])
 def get_logs():
     """
@@ -87,8 +138,22 @@ def get_logs():
                 type: number
                 example: 2.5
     """
-    logs = list(logs_collection.find())
-    serialized_logs = [serialize_log(log) for log in logs]
+    auth_header = request.headers.get('Authorization', None)
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+
+    id_token = auth_header.split('Bearer ')[1]
+
+    try:
+        # Verify Firebase ID token
+        decoded_token =auth.verify_id_token(id_token)
+        user_uid = decoded_token['uid']
+    except Exception as e:
+        return jsonify({"error": "Invalid or expired token"}), 401
+
+    
+    user_logs = list(logs_collection.find({"user_id": user_uid}))
+    serialized_logs = [serialize_log(log) for log in user_logs]
     return jsonify(serialized_logs), 200
 
 @app.route('/logs', methods=['POST'])
@@ -122,6 +187,19 @@ def create_log():
       201:
         description: Log created
     """
+    auth_header = request.headers.get('Authorization', None)
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+
+    id_token = auth_header.split('Bearer ')[1]
+
+    try:
+        # Verify Firebase ID token
+        decoded_token = auth.verify_id_token(id_token)
+        user_uid = decoded_token['uid']
+    except Exception as e:
+        return jsonify({"error": "Invalid or expired token"}), 401
+    
     data = request.get_json()
 
     required_fields = ['title', 'project', 'time_taken']
@@ -129,6 +207,7 @@ def create_log():
         return jsonify({"error": "Missing required fields"}), 400
 
     data["date"] =datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    data["user_id"] = user_uid
     result = logs_collection.insert_one(data)
 
     # Fetch the inserted document from MongoDB
@@ -176,6 +255,19 @@ def delete_log(log_id):
               type: string
               example: Invalid ObjectId
     """
+    auth_header = request.headers.get('Authorization', None)
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+
+    id_token = auth_header.split('Bearer ')[1]
+
+    try:
+        # Verify Firebase ID token
+        decoded_token = auth.verify_id_token(id_token)
+        user_uid = decoded_token['uid']
+    except Exception as e:
+        return jsonify({"error": "Invalid or expired token"}), 401
+    
     try:
         result = logs_collection.delete_one({"_id": ObjectId(log_id)})
         if result.deleted_count == 1:
@@ -240,6 +332,19 @@ def update_log(log_id):
               type: string
               example: Log not found
     """
+    auth_header = request.headers.get('Authorization', None)
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+
+    id_token = auth_header.split('Bearer ')[1]
+
+    try:
+        # Verify Firebase ID token
+        decoded_token = auth.verify_id_token(id_token)
+        user_uid = decoded_token['uid']
+    except Exception as e:
+        return jsonify({"error": "Invalid or expired token"}), 401
+    
     data = request.get_json()
     allowed_fields = {"title", "project", "time_taken"}
 
