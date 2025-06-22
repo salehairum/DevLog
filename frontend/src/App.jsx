@@ -6,10 +6,13 @@ import Login from './pages/Login'
 
 function App() {
   const [user, setUser] = useState(null)
+  const handleLogout = () => {
+    setUser(null)
+  }
   return (
     <>
       {user ? (
-        <Dashboard user={user} />
+        <Dashboard user={user} onLogout={handleLogout} />
       ) : (
         <Login onLogin={setUser} />
       )}

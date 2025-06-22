@@ -128,7 +128,8 @@ export function LogContainer() {
 
 
     return (
-        <div className="bg-white rounded-xl shadow-md w-1/2 flex flex-col p-6 max-h-[80vh]">
+        <div className="bg-white rounded-xl shadow-md w-1/2 flex flex-col p-6 h-[80vh]">
+
             {/* Header */}
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <h2 className="text-lg font-semibold">Logs</h2>
@@ -138,7 +139,7 @@ export function LogContainer() {
             {showForm && <AddLogForm onAdd={handleAddLog} onCancel={() => setShowForm(false)} />}
 
             {/* Scrollable logs list */}
-            <div className="overflow-y-auto space-y-4 flex-1">
+            <div className="overflow-y-auto space-y-4 flex-grow">
                 {loading ? (
                     <p className="text-gray-500 text-sm">Loading logs...</p>
                 ) : logs.length === 0 ? (

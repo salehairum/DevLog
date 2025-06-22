@@ -3,7 +3,8 @@ import { SideBar } from '@/components/SideBar'
 import { LogCard } from '@/components/LogCard'
 import { LogContainer } from '@/components/LogContainer'
 
-export default function Dashboard() {
+export default function Dashboard({ user, onLogout }) {
+
     const handleSignOut = () => {
         alert('Signing out...')
     }
@@ -11,7 +12,7 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen flex bg-background2">
             {/* Sidebar on the left */}
-            <SideBar onSignOut={handleSignOut} />
+            <SideBar onLogout={onLogout} />
 
             {/* Main content on the right */}
             <main className="p-6 flex-1">
