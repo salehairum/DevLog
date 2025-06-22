@@ -29,88 +29,20 @@ if not firebase_admin._apps:
 # Use `db` to access collections:
 logs_collection = db["logs"]
 
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-print("GOOGLE_CLIENT_ID:", GOOGLE_CLIENT_ID)
-
-
 def serialize_log(log):
     log["_id"] = str(log["_id"])
     return log
 
 @app.route("/login", methods=["POST"])
 def login():
-    # auth_header = request.headers.get("Authorization")
-    # if not auth_header or not auth_header.startswith("Bearer "):
-    #     return jsonify({"error": "Missing or invalid Authorization header"}), 401
-
-    # token = auth_header.split(" ")[1]
-
-    # try:
-    #     # Verify the Firebase ID token
-    #     decoded_token = id_token.verify_oauth2_token(token, grequests.Request(), GOOGLE_CLIENT_ID)
-    #     print("Decoded token:", decoded_token)
-    #     user_id = decoded_token["sub"]  # Firebase UID
-    #     email = decoded_token.get("email")
-    #     name = decoded_token.get("name")
-
-    #     # You can now create or retrieve this user in your database if needed
-
-    #     return jsonify({
-    #         "message": "Login successful",
-    #         "user": {
-    #             "uid": user_id,
-    #             "email": email,
-    #             "name": name
-    #         }
-    #     })
-
-    # except Exception as e:
-    #     return jsonify({"error": "Invalid token", "details": str(e)}), 401
-        # print("🔐 Received login request")
-        # print("GOOGLE_CLIENT_ID:", GOOGLE_CLIENT_ID)
-
-        # auth_header = request.headers.get("Authorization", "")
-        # print("Authorization header:", auth_header)
-
-        # if not auth_header.startswith("Bearer "):
-        #     print("❌ Missing or invalid Authorization header")
-        #     return jsonify({"error": "Unauthorized"}), 401
-
-        # token = auth_header.split(" ")[1]
-        # print("Firebase ID token:", token[:30], "...")  # truncate for readability
-        # def decode_without_verification(token):
-        #     payload = token.split('.')[1]
-        #     payload += '=' * (-len(payload) % 4)  # pad base64
-        #     return json.loads(base64.urlsafe_b64decode(payload))
-
-        # print(decode_without_verification(token))
-
-        # try:
-        #     decoded_token = id_token.verify_oauth2_token(token, grequests.Request(), GOOGLE_CLIENT_ID)
-        #     print("✅ Decoded token:", decoded_token)
-
-        #     user = {
-        #         "uid": decoded_token["sub"],
-        #         "email": decoded_token.get("email"),
-        #         "name": decoded_token.get("name")
-        #     }
-        #     return jsonify({"message": "Login successful", "user": user})
-
-        # except Exception as e:
-        #     print("❌ Token verification failed:", str(e))
-        #     return jsonify({"error": "Invalid token", "details": str(e)}), 401
-    print("🔐 Received login request")
-
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
 
     id_token_str = auth_header.split(" ")[1]
-    print("🔎 Firebase ID token:", id_token_str[:30], "...")
 
     try:
         decoded_token = auth.verify_id_token(id_token_str)
-        print("✅ Decoded token:", decoded_token)
 
         user = {
             "uid": decoded_token["uid"],
@@ -121,7 +53,6 @@ def login():
         return jsonify({"message": "Login successful", "user": user})
 
     except Exception as e:
-        print("❌ Token verification failed:", e)
         return jsonify({"error": "Invalid token", "details": str(e)}), 401
 @app.route('/logs', methods=['GET'])
 def get_logs():
