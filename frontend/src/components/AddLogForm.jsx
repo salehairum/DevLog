@@ -30,7 +30,7 @@ export function AddLogForm({ onAdd, onCancel }) {
     return (
         <form
             onSubmit={handleSubmit}
-            className="mb-4 flex flex-col space-y-4 max-w-md bg-logs1/70 rounded-xl p-4"
+            className="mb-4 flex flex-col space-y-4 max-w-lg bg-logs1/70 rounded-xl p-4"
         >
             <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-100 mb-1">Title</label>
@@ -72,17 +72,17 @@ export function AddLogForm({ onAdd, onCancel }) {
 
             <div className="flex gap-2 justify-end">
                 <button
-                    type="button"
-                    onClick={onCancel}
-                    className="px-4 py-2 rounded bg-gray-300 text-gray-700 hover:bg-gray-400 transition"
-                >
-                    Cancel
-                </button>
-                <button
                     type="submit"
                     className="bg-logs1 text-white px-4 py-2 rounded hover:bg-logs1/90 transition"
                 >
                     Add
+                </button>
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="text-white bg-gray-600 px-3 py-1 rounded hover:bg-gray-700 transition"
+                >
+                    Cancel
                 </button>
             </div>
         </form>
