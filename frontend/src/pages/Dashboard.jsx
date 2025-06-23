@@ -5,7 +5,7 @@ import { FilterContainer } from '@/components/FilterContainer'
 import { LogChart } from '@/components/LogChart'
 import { auth } from '@/firebaseConfig'
 import { useAuth } from '@/contexts/AuthContext'
-import { envConfig } from './env-config';
+import envConfig from '../env-config';
 
 export default function Dashboard() {
     const [filters, setFilters] = useState({ project: '', date: '', title: '' })

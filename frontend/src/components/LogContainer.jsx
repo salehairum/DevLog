@@ -4,7 +4,7 @@ import { AddLogButton } from "./AddLogButton";
 import { AddLogForm } from "./AddLogForm";
 import { auth } from "../firebaseConfig";
 import { useAuth } from '@/contexts/AuthContext'
-import { envConfig } from './env-config';
+import envConfig from '../env-config';
 
 export function LogContainer({ logs, setLogs, loading, fetchLogs, className }) {
     const [showForm, setShowForm] = useState(false)
