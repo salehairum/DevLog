@@ -6,7 +6,7 @@ import { LogChart } from '@/components/LogChart'
 import { auth } from '@/firebaseConfig'
 
 export default function Dashboard({ user, onLogout }) {
-    const [filters, setFilters] = useState({ project: '', date: '' })
+    const [filters, setFilters] = useState({ project: '', date: '', title: '' })
 
     const [logs, setLogs] = useState([])
     const [loading, setLoading] = useState(true)
@@ -23,6 +23,9 @@ export default function Dashboard({ user, onLogout }) {
             const queryParams = new URLSearchParams()
             if (filters.project) queryParams.append('project', filters.project)
             if (filters.date) queryParams.append('date', filters.date)
+            if (filters.title) queryParams.append('title', filters.title)
+
+            console.log(queryParams.toString());
 
             const response = await fetch(`${BASE_URL}/logs?${queryParams.toString()}`, {
                 headers: {
@@ -57,7 +60,7 @@ export default function Dashboard({ user, onLogout }) {
                 {/* Left column: Filters + Chart */}
                 <div className="flex flex-col gap-6 w-1/2 h-full">
                     <FilterContainer filters={filters} onFilterChange={handleFilterChange} />
-                    <LogChart logs={logs} />
+                    <LogChart logs={logs} className="flex-grow" />
                 </div>
 
                 {/* Right column: Logs only */}

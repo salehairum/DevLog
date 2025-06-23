@@ -1,7 +1,7 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-export function LogChart({ logs }) {
+export function LogChart({ logs, className }) {
     // Count logs per day for the last 7 days
     const today = new Date();
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -26,7 +26,7 @@ export function LogChart({ logs }) {
     }));
 
     return (
-        <div className="w-full h-64 bg-white px-2 py-4 rounded-xl shadow">
+        <div className={`w-full bg-white px-2 py-4 rounded-xl shadow flex flex-col ${className}`}>
             <h2 className="text-md font-semibold mb-2">Logs in the Last 7 Days</h2>
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}

@@ -154,11 +154,14 @@ def get_logs():
 
     project = request.args.get('project')
     date = request.args.get('date')  
+    title = request.args.get('title')
     
     if project:
         filters['project'] = project
     if date:
         filters['date'] = date
+    if title:
+        filters['title'] = {'$regex': f".*{title}.*", '$options': 'i'}
 
     # Fetch and serialize logs
     user_logs = list(logs_collection.find(filters).sort('date', -1))

@@ -19,13 +19,24 @@ export function FilterContainer({ className, filters, onFilterChange }) {
     }
 
     const handleClear = () => {
-        const cleared = { project: '', date: '' }
+        const cleared = { project: '', date: '', title: '' }
+
         setLocalFilters(cleared)
         onFilterChange(cleared)
     }
 
     return (
         <div className={`p-4 bg-white rounded-2xl shadow flex flex-col gap-4 ${className}`}>
+            <h2 className="text-lg font-semibold">Filter Logs</h2>
+            <input
+                name="title"
+                type="text"
+                placeholder="Search by title"
+                className="border px-3 py-2 rounded"
+                value={localFilters.title}
+                onChange={handleInputChange}
+            />
+
             <input
                 name="project"
                 type="text"
