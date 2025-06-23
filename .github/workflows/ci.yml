@@ -42,10 +42,14 @@ jobs:
           ${{ secrets.DOCKER_USERNAME }}/devlog-frontend:${{ env.SHORT_SHA }}
 
     - name: Update docker-compose.yml with commit SHA tags
+      env:
+        SHORT_SHA: ${{ env.SHORT_SHA }}
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       run: |
-        sed -i "s|devlog-backend:latest|devlog-backend:${SHORT_SHA}|g" compose.yml
-        sed -i "s|devlog-frontend:latest|devlog-frontend:${SHORT_SHA}|g" compose.yml
-    
+        sed -i -E "s|(${DOCKER_USERNAME}/devlog-backend:)[a-zA-Z0-9._-]+|\1${SHORT_SHA}|g" compose.yml
+        sed -i -E "s|(${DOCKER_USERNAME}/devlog-frontend:)[a-zA-Z0-9._-]+|\1${SHORT_SHA}|g" compose.yml
+        
+          
     - name: Commit and push updated compose.yml
       run: |
         git config user.name "GitHub Actions"
