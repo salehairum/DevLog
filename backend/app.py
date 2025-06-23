@@ -4,22 +4,15 @@ from flask_cors import CORS
 from bson import ObjectId
 from flasgger import Swagger
 from datetime import datetime, timezone
-# from google.oauth2 import id_token
-# from google.auth.transport import requests as grequests
 import firebase_admin
 from firebase_admin import auth, credentials
- # for verify_id_token()
-import os
 from dotenv import load_dotenv
-import base64
-import json
 
 load_dotenv()  # loads variables from .env into environment
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 swagger = Swagger(app)
-
 
 cred = credentials.Certificate("firebase-service-account.json") 
 if not firebase_admin._apps:

@@ -1,7 +1,6 @@
 Flask
 pymongo
 flask-cors
-# google-auth
 firebase-admin
 flasgger
 python-dotenv
