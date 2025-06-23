@@ -49,9 +49,14 @@ jobs:
         sed -i "s|devlog-frontend:latest|devlog-frontend:${SHORT_SHA}|g" compose.yml
     
     - name: Commit and push updated compose.yml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
         git add compose.yml
         git commit -m "Update compose.yml with image tags for ${{ env.SHORT_SHA }}" || echo "No changes to commit"
-        git push
+        
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+        git push origin HEAD
+
