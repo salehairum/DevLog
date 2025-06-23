@@ -3,7 +3,7 @@ from database import db
 from flask_cors import CORS
 from bson import ObjectId
 from flasgger import Swagger
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import firebase_admin
 from firebase_admin import auth, credentials
 from dotenv import load_dotenv
@@ -160,6 +160,58 @@ def get_logs():
     user_logs = list(logs_collection.find(filters).sort('date', -1))
     serialized_logs = [serialize_log(log) for log in user_logs]
     return jsonify(serialized_logs), 200
+
+@app.route('/logs/streak', methods=['GET'])
+def get_logs_streak():
+
+    auth_header = request.headers.get('Authorization', None)
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+
+    id_token = auth_header.split('Bearer ')[1]
+    print(f"Extracted token: {id_token[:20]}...")  # Print partial token for safety
+
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        user_uid = decoded_token['uid']
+    except Exception as e:
+        print(f"Token verification failed: {e}")
+        return jsonify({"error": "Invalid or expired token"}), 401
+
+    # Parse days parameter (default 30)
+    try:
+        days = int(request.args.get('days', 30))
+    except ValueError:
+        return jsonify({"error": "Invalid 'days' parameter"}), 400
+
+    # Calculate start date for filtering
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
+    start_date_str = start_date.strftime('%Y-%m-%d')
+
+    filters = {
+        'user_id': user_uid,
+        'date': {'$gte': start_date_str}
+    }
+
+    # Project only date and time_taken fields
+    projection = {
+        '_id': 0,
+        'date': 1,
+        'time_taken': 1
+    }
+
+    try:
+        logs_cursor = logs_collection.find(filters, projection).sort('date', 1)
+        logs = list(logs_cursor)
+    except Exception as e:
+        return jsonify({"error": "Database query failed"}), 500
+
+    # Serialize date to string if needed
+    for log in logs:
+        if isinstance(log.get('date'), datetime):
+            log['date'] = log['date'].strftime('%Y-%m-%d')
+
+    return jsonify(logs), 200
 
 @app.route('/logs', methods=['POST'])
 def create_log():
