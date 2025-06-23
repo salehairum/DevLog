@@ -1,6 +1,6 @@
 services:
   backend:
-    image: salehaa/devlog-backend:latest
+    image: salehaa/devlog-backend:0796a7
     container_name: devlog-backend
     env_file:
       - ./backend/.env
@@ -12,7 +12,7 @@ services:
       - mongo
 
   frontend:
-    image: salehaa/devlog-frontend:latest
+    image: salehaa/devlog-frontend:0796a7
     container_name: devlog-frontend
     env_file:
       - ./frontend/.env
