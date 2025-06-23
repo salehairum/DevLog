@@ -1,16 +1,18 @@
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebaseConfig'
 import logo from '../logo.png'
-
+import { useAuth } from '@/contexts/AuthContext'
 export function SideBar({ onLogout }) {
+    const { logout } = useAuth()
+
     const handleLogout = async () => {
         try {
-            await signOut(auth)
-            onLogout() // will call setUser(null) in App
+            await logout()  // This will call auth.signOut() and clear context
         } catch (err) {
             console.error("Error during sign out:", err)
         }
     }
+
 
     return (
         <div className="flex flex-col justify-between h-screen w-60 bg-logs2 text-black p-4">

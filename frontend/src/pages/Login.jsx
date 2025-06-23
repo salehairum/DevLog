@@ -1,20 +1,24 @@
 import React from "react";
+import { useNavigate } from 'react-router-dom'
 import { auth } from "../firebaseConfig";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import logo_main from "../logo_main.png";
+import logo_main from "../logo_main.png"; 
+import { useAuth } from '@/contexts/AuthContext'
 
-export default function Login({ onLogin }) {
+export default function Login() {
+    const navigate = useNavigate()
+    const { login } = useAuth()  
     const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
+    
     const handleGoogleLogin = async () => {
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
 
             const user = result.user;
-            const token = await user.getIdToken(); // Firebase ID token
-            console.log("Firebase ID Token:", token);
+            const token = await user.getIdToken();
 
-            // Send token to backend for verification
+            // Send token to your backend
             const res = await fetch(`${BASE_URL}/login`, {
                 method: "POST",
                 headers: {
@@ -28,14 +32,14 @@ export default function Login({ onLogin }) {
             const data = await res.json();
             console.log("Login successful:", data);
 
-            // Optional: store user info or token
-            onLogin(data.user); // Lift state up if needed
-
+            // Context will already update user via onAuthStateChanged
+            navigate('/dashboard');
         } catch (err) {
             console.error("Login error:", err);
             alert("Login failed. Check console.");
         }
     };
+
 
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-background2 px-4">

@@ -3,18 +3,22 @@ import { LogCard } from "./LogCard";
 import { AddLogButton } from "./AddLogButton";
 import { AddLogForm } from "./AddLogForm";
 import { auth } from "../firebaseConfig";
-
+import { useAuth } from '@/contexts/AuthContext'
 export function LogContainer({ logs, setLogs, loading, fetchLogs, className }) {
     const [showForm, setShowForm] = useState(false)
     const [editingLogId, setEditingLogId] = useState(null)
 
     const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL
+    const { user } = useAuth()
+
+    const getToken = async () => {
+        if (!user) throw new Error("User not logged in")
+        return await user.getIdToken()
+    }
 
     const handleAddLog = async (newLog) => {
         try {
-            const user = auth.currentUser
-            if (!user) throw new Error("User not logged in")
-            const token = await user.getIdToken()
+            const token = await getToken()
 
             const response = await fetch(`${BASE_URL}/logs`, {
                 method: "POST",
@@ -35,9 +39,7 @@ export function LogContainer({ logs, setLogs, loading, fetchLogs, className }) {
 
     const handleDeleteLog = async (logId) => {
         try {
-            const user = auth.currentUser
-            if (!user) throw new Error("User not logged in")
-            const token = await user.getIdToken()
+            const token = await getToken()
 
             const response = await fetch(`${BASE_URL}/logs/${logId}`, {
                 method: "DELETE",
@@ -57,9 +59,7 @@ export function LogContainer({ logs, setLogs, loading, fetchLogs, className }) {
     const handleUpdateLog = async (logId, updatedLog) => {
         const { title, project, time_taken } = updatedLog
         try {
-            const user = auth.currentUser
-            if (!user) throw new Error("User not logged in")
-            const token = await user.getIdToken()
+            const token = await getToken()
 
             const response = await fetch(`${BASE_URL}/logs/${logId}`, {
                 method: "PATCH",

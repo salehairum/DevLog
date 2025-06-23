@@ -4,21 +4,24 @@ import { LogContainer } from '@/components/LogContainer'
 import { FilterContainer } from '@/components/FilterContainer'
 import { LogChart } from '@/components/LogChart'
 import { auth } from '@/firebaseConfig'
+import { useAuth } from '@/contexts/AuthContext'
 
-export default function Dashboard({ user, onLogout }) {
+export default function Dashboard() {
     const [filters, setFilters] = useState({ project: '', date: '', title: '' })
 
     const [logs, setLogs] = useState([])
     const [loading, setLoading] = useState(true)
+
+    const { user, logout } = useAuth()
 
     const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL
 
     const fetchLogs = async () => {
         setLoading(true)
         try {
-            const user = auth.currentUser
             if (!user) throw new Error('User not logged in')
             const token = await user.getIdToken()
+
 
             const queryParams = new URLSearchParams()
             if (filters.project) queryParams.append('project', filters.project)
@@ -54,7 +57,7 @@ export default function Dashboard({ user, onLogout }) {
 
     return (
         <div className="min-h-screen flex bg-background2">
-            <SideBar onLogout={onLogout} />
+            <SideBar />
 
             <main className="p-6 flex flex-1 gap-6 items-start w-full h-screen">
                 {/* Left column: Filters + Chart */}
