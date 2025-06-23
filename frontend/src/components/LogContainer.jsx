@@ -79,7 +79,7 @@ export function LogContainer({ logs, setLogs, loading, fetchLogs, className }) {
     }
 
     return (
-        <div className={`bg-white rounded-xl shadow-md w-full flex flex-col p-6 h-[80vh] ${className}`}>
+        <div className={`bg-white rounded-xl shadow-md w-full flex flex-col p-6 h-full ${className}`}>
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <h2 className="text-lg font-semibold">Logs</h2>
                 <AddLogButton onClick={() => setShowForm((show) => !show)} />

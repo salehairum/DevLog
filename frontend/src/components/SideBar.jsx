@@ -13,7 +13,7 @@ export function SideBar({ onLogout }) {
     }
 
     return (
-        <div className="flex flex-col justify-between h-screen w-60 bg-bars text-black p-4">
+        <div className="flex flex-col justify-between h-screen w-60 bg-logs2 text-black p-4">
             <div className="flex justify-center mb-8">
                 <img src={logo} alt="Logo" className="w-32 h-auto" />
             </div>

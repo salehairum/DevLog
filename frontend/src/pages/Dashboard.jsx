@@ -12,6 +12,7 @@ export default function Dashboard({ user, onLogout }) {
     const [loading, setLoading] = useState(true)
 
     const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL
+
     const fetchLogs = async () => {
         setLoading(true)
         try {
@@ -52,13 +53,15 @@ export default function Dashboard({ user, onLogout }) {
         <div className="min-h-screen flex bg-background2">
             <SideBar onLogout={onLogout} />
 
-            <main className="p-6 flex flex-1 gap-6 items-start w-full">
-                <div className="flex flex-col gap-6 flex-grow-[1]">
+            <main className="p-6 flex flex-1 gap-6 items-start w-full h-screen">
+                {/* Left column: Filters + Chart */}
+                <div className="flex flex-col gap-6 w-1/2 h-full">
                     <FilterContainer filters={filters} onFilterChange={handleFilterChange} />
+                    <LogChart logs={logs} />
                 </div>
 
-                <div className="flex flex-col gap-6 flex-grow-[2] max-h-full w-full overflow-auto">
-                    <LogChart logs={logs} />
+                {/* Right column: Logs only */}
+                <div className="w-1/2 h-full">
                     <LogContainer
                         logs={logs}
                         setLogs={setLogs}
