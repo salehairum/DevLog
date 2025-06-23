@@ -45,3 +45,13 @@ jobs:
       run: |
         sed -i "s|devlog-backend:latest|devlog-backend:${SHORT_SHA}|g" compose.yml
         sed -i "s|devlog-frontend:latest|devlog-frontend:${SHORT_SHA}|g" compose.yml
+    
+    - name: Commit and push updated compose.yml
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add compose.yml
+        git commit -m "Update compose.yml with image tags for ${{ env.SHORT_SHA }}" || echo "No changes to commit"
+        git push
+
+        
