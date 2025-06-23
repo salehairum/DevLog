@@ -1,4 +1,4 @@
-export const envConfig = {
+const envConfig = {
     VITE_BACKEND_API_BASE_URL: '__VITE_BACKEND_API_BASE_URL__',
     VITE_FIREBASE_API_KEY: '__VITE_FIREBASE_API_KEY__',
     VITE_FIREBASE_AUTH_DOMAIN: '__VITE_FIREBASE_AUTH_DOMAIN__',
@@ -7,4 +7,5 @@ export const envConfig = {
     VITE_FIREBASE_MESSAGING_SENDER_ID: '__VITE_FIREBASE_MESSAGING_SENDER_ID__',
     VITE_FIREBASE_APP_ID: '__VITE_FIREBASE_APP_ID__',
 };
-  
+
+export default envConfig;
