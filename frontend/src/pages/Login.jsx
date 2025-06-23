@@ -4,6 +4,7 @@ import { auth } from "../firebaseConfig";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import logo_main from "../logo_main.png"; 
 import { useAuth } from '@/contexts/AuthContext'
+import { envConfig } from './env-config';
 
 export default function Login() {
     const navigate = useNavigate()
