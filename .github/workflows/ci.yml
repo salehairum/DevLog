@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        persist-credentials: true
 
     - name: Get short commit SHA
       id: vars
@@ -53,5 +55,3 @@ jobs:
         git add compose.yml
         git commit -m "Update compose.yml with image tags for ${{ env.SHORT_SHA }}" || echo "No changes to commit"
         git push
-
-        
