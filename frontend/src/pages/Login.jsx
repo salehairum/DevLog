@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 export default function Login() {
     const navigate = useNavigate()
     const { login } = useAuth()  
-    const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
+    const BASE_URL = envConfig.VITE_BACKEND_API_BASE_URL
     
     const handleGoogleLogin = async () => {
         try {

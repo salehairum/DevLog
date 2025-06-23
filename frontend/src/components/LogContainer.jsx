@@ -8,7 +8,7 @@ export function LogContainer({ logs, setLogs, loading, fetchLogs, className }) {
     const [showForm, setShowForm] = useState(false)
     const [editingLogId, setEditingLogId] = useState(null)
 
-    const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL
+    const BASE_URL = envConfig.VITE_BACKEND_API_BASE_URL
     const { user } = useAuth()
 
     const getToken = async () => {

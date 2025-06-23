@@ -14,7 +14,7 @@ export default function Dashboard() {
 
     const { user, logout } = useAuth()
 
-    const BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL
+    const BASE_URL = envConfig.VITE_BACKEND_API_BASE_URL
 
     const fetchLogs = async () => {
         setLoading(true)
