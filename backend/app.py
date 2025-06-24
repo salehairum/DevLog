@@ -7,6 +7,9 @@ from datetime import datetime, timezone, timedelta
 import firebase_admin
 from firebase_admin import auth, credentials
 from dotenv import load_dotenv
+from vectorstore import add_log_to_chroma, embedding_model, chroma_client, logs_collection_chroma
+import numpy as np
+
 
 load_dotenv()  # loads variables from .env into environment
 
@@ -213,6 +216,68 @@ def get_logs_streak():
 
     return jsonify(logs), 200
 
+@app.route("/logs/search", methods=["POST"])
+def semantic_search_logs():
+    """
+    Semantic search logs by query text
+    ---
+    tags:
+      - Logs
+    parameters:
+      - in: body
+        name: search
+        schema:
+          type: object
+          properties:
+            query:
+              type: string
+              example: "fixed firebase auth issue"
+            top_n:
+              type: integer
+              example: 5
+    responses:
+      200:
+        description: List of logs matching semantically
+        schema:
+          type: array
+          items:
+            type: object
+    """
+    data = request.get_json()
+    query = data.get("query", "").strip()
+    top_n = data.get("top_n", 5)
+
+    if not query:
+        return jsonify({"error": "Query text is required"}), 400
+
+    # Embed the query
+    query_embedding = embedding_model.encode(query).tolist()
+
+    # Query ChromaDB for top N similar logs
+    results = logs_collection_chroma.query(
+        query_embeddings=[query_embedding],
+        n_results=top_n,
+        include_metadata=True,
+        include_ids=True
+    )
+
+    # results is a dict like: {'ids': [...], 'metadatas': [...], 'distances': [...]}
+
+    # Extract Mongo IDs from results
+    mongo_ids = [ObjectId(m['mongo_id']) for m in results['metadatas'][0]]
+
+    # Fetch full logs from MongoDB
+    mongo_logs = list(db.logs.find({"_id": {"$in": mongo_ids}}))
+
+    # Optional: order logs by the order of IDs from Chroma (similarity ranking)
+    id_to_log = {log['_id']: log for log in mongo_logs}
+    ordered_logs = [id_to_log[oid] for oid in mongo_ids if oid in id_to_log]
+
+    # Serialize logs for JSON response
+    serialized_logs = [serialize_log(log) for log in ordered_logs]
+
+    return jsonify(serialized_logs), 200
+
 @app.route('/logs', methods=['POST'])
 def create_log():
     """
@@ -271,6 +336,8 @@ def create_log():
     created_log = logs_collection.find_one({"_id": result.inserted_id})
     serialized_log = serialize_log(created_log)
 
+    #store in chromadb
+    add_log_to_chroma(created_log["_id"], created_log["title"])
     return jsonify(serialized_log), 201
 
 @app.route('/logs/<log_id>', methods=['DELETE'])
