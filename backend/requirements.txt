@@ -5,3 +5,5 @@ firebase-admin
 flasgger
 python-dotenv
 requests
+sentence-transformers
+chromadb 

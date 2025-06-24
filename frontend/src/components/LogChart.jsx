@@ -26,18 +26,23 @@ export function LogChart({ logs, className }) {
     }));
 
     return (
-        <div className={`w-full bg-white px-2 py-4 rounded-xl shadow flex flex-col ${className}`}>
+        <div
+            className={`w-full bg-white px-2 py-4 rounded-xl shadow flex flex-col flex-grow ${className}`}
+            style={{ minHeight: 0 }}
+        >
             <h2 className="text-md font-semibold mb-2">Logs in the Last 7 Days</h2>
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}
-                    margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#bb8588" radius={[6, 6, 0, 0]} />
-                </BarChart>
-            </ResponsiveContainer>
+            <div className="flex-grow min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#bb8588" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
         </div>
-    );
+    )
+
 }

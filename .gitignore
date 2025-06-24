@@ -21,6 +21,8 @@
 # Flask instance folder
 /backend/instance/
 .env
+chroma_persist/
+
 
 # Pytest cache
 /.pytest_cache/
