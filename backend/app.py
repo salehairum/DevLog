@@ -240,36 +240,44 @@ def semantic_search_logs():
           items:
             type: object
     """
+    # You can get user_id from auth token or request data
+    auth_header = request.headers.get('Authorization', None)
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+
+    id_token = auth_header.split('Bearer ')[1]
+    print(f"Extracted token: {id_token[:20]}...")  # Print partial token for safety
+
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        user_uid = decoded_token['uid']
+    except Exception as e:
+        print(f"Token verification failed: {e}")
+        return jsonify({"error": "Invalid or expired token"}), 401
+
     data = request.get_json()
     query = data.get("query", "").strip()
     top_n = data.get("top_n", 5)
-
     if not query:
         return jsonify({"error": "Query text is required"}), 400
 
-    # Embed the query
     query_embedding = embedding_model.encode(query).tolist()
 
-    # Query ChromaDB for top N similar logs
+    # Query ChromaDB with metadata filter for user_id
     results = logs_collection_chroma.query(
-    query_embeddings=[query_embedding],
-    n_results=top_n
-)
+        query_embeddings=[query_embedding],
+        n_results=top_n,
+        where={"user_id": str(user_uid)}  # filter by user_id in metadata
+    )
 
+    mongo_ids = [ObjectId(m["mongo_id"]) for m in results["metadatas"][0]]
 
-    # results is a dict like: {'ids': [...], 'metadatas': [...], 'distances': [...]}
+    # Fetch logs for this user only (extra safety)
+    mongo_logs = list(db.logs.find({"_id": {"$in": mongo_ids}, "user_id": str(user_uid)}))
 
-    # Extract Mongo IDs from results
-    mongo_ids = [ObjectId(m['mongo_id']) for m in results['metadatas'][0]]
-
-    # Fetch full logs from MongoDB
-    mongo_logs = list(db.logs.find({"_id": {"$in": mongo_ids}}))
-
-    # Optional: order logs by the order of IDs from Chroma (similarity ranking)
-    id_to_log = {log['_id']: log for log in mongo_logs}
+    id_to_log = {log["_id"]: log for log in mongo_logs}
     ordered_logs = [id_to_log[oid] for oid in mongo_ids if oid in id_to_log]
 
-    # Serialize logs for JSON response
     serialized_logs = [serialize_log(log) for log in ordered_logs]
 
     return jsonify(serialized_logs), 200
@@ -333,7 +341,7 @@ def create_log():
     serialized_log = serialize_log(created_log)
 
     #store in chromadb
-    add_log_to_chroma(created_log["_id"], created_log["title"])
+    add_log_to_chroma(created_log["_id"], created_log["user_id"],created_log["title"])
     return jsonify(serialized_log), 201
 
 @app.route('/logs/<log_id>', methods=['DELETE'])
@@ -488,3 +496,4 @@ def update_log(log_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
