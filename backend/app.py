@@ -150,14 +150,11 @@ def get_logs():
 
     project = request.args.get('project')
     date = request.args.get('date')  
-    title = request.args.get('title')
     
     if project:
-        filters['project'] = project
+        filters['project'] = {'$regex': f".*{project}.*", '$options': 'i'}
     if date:
         filters['date'] = date
-    if title:
-        filters['title'] = {'$regex': f".*{title}.*", '$options': 'i'}
 
     # Fetch and serialize logs
     user_logs = list(logs_collection.find(filters).sort('date', -1))
@@ -255,11 +252,10 @@ def semantic_search_logs():
 
     # Query ChromaDB for top N similar logs
     results = logs_collection_chroma.query(
-        query_embeddings=[query_embedding],
-        n_results=top_n,
-        include_metadata=True,
-        include_ids=True
-    )
+    query_embeddings=[query_embedding],
+    n_results=top_n
+)
+
 
     # results is a dict like: {'ids': [...], 'metadatas': [...], 'distances': [...]}
 
