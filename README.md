@@ -21,6 +21,7 @@ Then run the server as
 ```sh
 flask run
 ```
+also add a "firebase-service-account.json" to the backend folder.
 
 ### Frontend
 To install dependencies, run the following commands
@@ -33,3 +34,4 @@ To run,
 npm run dev
 ```
 If your backend is running on a different port, modify it in the .env file in frontend folder.
+Modify the firebase variables accordingly as well.
