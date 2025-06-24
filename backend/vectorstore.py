@@ -13,11 +13,12 @@ logs_collection_chroma = chroma_client.get_or_create_collection(
     metadata={"hnsw:space": "cosine"}
 )
 
-def add_log_to_chroma(log_id, text):
+
+def add_log_to_chroma(log_id, user_id, text):
     embedding = embedding_model.encode(text).tolist()
     logs_collection_chroma.add(
         documents=[text],
         embeddings=[embedding],
-        metadatas=[{"mongo_id": str(log_id)}],
+        metadatas=[{"mongo_id": str(log_id), "user_id": str(user_id)}],  # Add user_id here
         ids=[str(log_id)]
     )
