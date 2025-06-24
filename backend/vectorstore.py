@@ -6,7 +6,8 @@ print("Loading ChromaDB and SentenceTransformer...")
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 print("Embedding model loaded.")
 
-chroma_client = chromadb.Client(Settings(persist_directory="./chroma_persist"))
+chroma_client = chromadb.PersistentClient(path="./chroma_persist")
+
 logs_collection_chroma = chroma_client.get_or_create_collection(
     name="devlog_db",
     metadata={"hnsw:space": "cosine"}

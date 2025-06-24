@@ -22,24 +22,21 @@ export default function Dashboard() {
     const fetchLogs = async () => {
         setLoading(true)
         try {
-            if (!user) throw new Error('User not logged in')
+            if (!user) throw new Error("User not logged in")
             const token = await user.getIdToken()
 
-
             const queryParams = new URLSearchParams()
-            if (filters.project) queryParams.append('project', filters.project)
-            if (filters.date) queryParams.append('date', filters.date)
-
-            console.log(queryParams.toString());
+            if (filters.project) queryParams.append("project", filters.project)
+            if (filters.date) queryParams.append("date", filters.date)
 
             const response = await fetch(`${BASE_URL}/logs?${queryParams.toString()}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
             })
 
-            if (!response.ok) throw new Error('Failed to fetch logs')
+            if (!response.ok) throw new Error("Failed to fetch logs")
             const data = await response.json()
             setLogs(data)
         } catch (err) {
@@ -47,16 +44,6 @@ export default function Dashboard() {
         } finally {
             setLoading(false)
         }
-    }
-
-    useEffect(() => {
-        if (!semanticQuery.trim()) {
-            fetchLogs()
-        }
-    }, [filters, semanticQuery])
-
-    const handleFilterChange = (newFilters) => {
-        setFilters(newFilters)
     }
 
     const fetchSemanticLogs = async (queryText) => {
@@ -86,6 +73,19 @@ export default function Dashboard() {
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        // Only fetch filtered logs if semanticQuery is empty (no semantic search active)
+        if (!semanticQuery.trim()) {
+            fetchLogs();
+        }
+    }, [filters]);
+
+    const handleFilterChange = (newFilters) => {
+        setSemanticQuery("") // Clear semantic query if using filters
+        setFilters(newFilters)
+    }
+
     const handleSemanticSearch = (query) => {
         setSemanticQuery(query)
         if (query.trim()) {
@@ -94,8 +94,6 @@ export default function Dashboard() {
             fetchLogs()
         }
     }
-
-
     return (
         <div className="min-h-screen flex bg-background2">
             <SideBar />

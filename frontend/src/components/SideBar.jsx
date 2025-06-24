@@ -3,9 +3,14 @@ import { auth } from '../firebaseConfig'
 import logo from '../logo.png'
 import { useAuth } from '@/contexts/AuthContext'
 import { StreakGrid } from './StreakGrid'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCircleUser } from '@fortawesome/free-solid-svg-icons'
+import { useState } from 'react'
 
 export function SideBar() {
     const { user, logout } = useAuth()
+
+    const [imgError, setImgError] = useState(false)
 
     const handleLogout = async () => {
         try {
@@ -28,11 +33,19 @@ export function SideBar() {
 
                 {user && (
                     <div className="flex items-center gap-3 bg-white rounded-xl shadow px-3 py-2 mb-6">
-                        <img
-                            src={user.photoURL || '/default-avatar.png'}
-                            alt="Profile"
-                            className="w-12 h-12 rounded-full object-cover border"
-                        />
+                        {user.photoURL && !imgError ? (
+                            <img
+                                src={user.photoURL}
+                                alt="Profile"
+                                className="w-12 h-12 rounded-full object-cover border"
+                                onError={() => setImgError(true)}
+                            />
+                        ) : (
+                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center border">
+                                <FontAwesomeIcon icon={faCircleUser} className="text-gray-400 text-3xl" />
+                            </div>
+                        )}
+
                         <div className="flex flex-col">
                             <p className="font-semibold text-sm truncate w-32">
                                 {user.displayName || 'No Name'}

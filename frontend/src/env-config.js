@@ -9,7 +9,9 @@
 // };
 
 // export default envConfig;
-const isEnvInjected = import.meta.env.VITE_BACKEND_API_BASE_URL === '__VITE_BACKEND_API_BASE_URL__';
+
+// const isEnvInjected = import.meta.env.VITE_BACKEND_API_BASE_URL === '__VITE_BACKEND_API_BASE_URL__';
+const isEnvInjected = typeof __VITE_BACKEND_API_BASE_URL__ !== 'undefined';
 
  const envConfig = {
     VITE_BACKEND_API_BASE_URL: isEnvInjected
