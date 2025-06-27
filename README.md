@@ -35,3 +35,5 @@ npm run dev
 ```
 If your backend is running on a different port, modify it in the .env file in frontend folder.
 Modify the firebase variables accordingly as well.
+
+**Important** : Firebase tokens are time-sensitive. Make sure your system clock is in sync with a time server (like time.google.com) before testing login functionality.
