@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 
 from database import db
-from services.vector_service import add_log
+from services import vector_service
 from utils.serializers import serialize_log
 
 logs_collection = db["logs"]
@@ -84,7 +84,7 @@ def create_log(user_id, data):
         {"_id": result.inserted_id}
     )
 
-    add_log(
+    vector_service.add_log(
         created_log["_id"],
         created_log["user_id"],
         created_log["title"],
@@ -98,6 +98,11 @@ def delete_log(user_id, log_id):
         "_id": ObjectId(log_id),
         "user_id": user_id
     })
+    if result.deleted_count == 1:
+        vector_service.delete_log(log_id)
+        return True
+
+    return False
 
     return result.deleted_count == 1
 
@@ -133,6 +138,12 @@ def update_log(user_id, log_id, data):
 
     updated = logs_collection.find_one(
         {"_id": ObjectId(log_id)}
+    )
+
+    vector_service.update_log(
+        log_id=updated_log["_id"],
+        user_id=updated_log["user_id"],
+        text=updated_log["title"],
     )
 
     return serialize_log(updated)

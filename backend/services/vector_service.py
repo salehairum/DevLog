@@ -1,10 +1,14 @@
 from bson import ObjectId
 
+from config.search import (
+    MAX_CANDIDATES,
+    SIMILARITY_THRESHOLD,
+)
+
 from vectorstore import (
     embedding_model,
     logs_collection,
 )
-
 
 def encode(text):
     """
@@ -15,7 +19,7 @@ def encode(text):
 
 def add_log(log_id, user_id, text):
     """
-    Index a newly-created log in ChromaDB.
+    Index a log in ChromaDB.
     """
 
     embedding = encode(text)
@@ -33,29 +37,73 @@ def add_log(log_id, user_id, text):
     )
 
 
+def delete_log(log_id):
+    """
+    Remove a log from ChromaDB.
+    """
+
+    logs_collection.delete(
+        ids=[str(log_id)]
+    )
+
+
+def update_log(log_id, user_id, text):
+    """
+    Update a log embedding.
+
+    Chroma supports update(), but delete()+add()
+    is simple and works everywhere.
+    """
+
+    delete_log(log_id)
+
+    add_log(
+        log_id=log_id,
+        user_id=user_id,
+        text=text,
+    )
+
 def semantic_search(user_id, query, top_n=5):
     """
     Perform semantic search against ChromaDB.
 
-    Returns a list of Mongo ObjectIds in ranked order.
+    Returns only matches whose similarity score exceeds
+    SIMILARITY_THRESHOLD.
     """
 
     query_embedding = encode(query)
 
     results = logs_collection.query(
         query_embeddings=[query_embedding],
-        n_results=top_n,
+        n_results=MAX_CANDIDATES,
         where={
-            "user_id": user_id
-        }
+            "user_id": user_id,
+        },
+        include=[
+            "metadatas",
+            "distances",
+        ],
     )
 
     metadatas = results.get("metadatas", [[]])[0]
+    distances = results.get("distances", [[]])[0]
 
     if not metadatas:
         return []
 
-    return [
-        ObjectId(metadata["mongo_id"])
-        for metadata in metadatas
-    ]
+    matches = []
+
+    for metadata, distance in zip(metadatas, distances):
+
+        score = 1.0 - float(distance)
+
+        if score < SIMILARITY_THRESHOLD:
+            continue
+
+        matches.append({
+            "mongo_id": ObjectId(metadata["mongo_id"]),
+            "distance": float(distance),
+            "score": round(score, 4),
+        })
+
+    return matches[:top_n]

@@ -19,8 +19,6 @@ export function SideBar() {
             console.error("Error during sign out:", err)
         }
     }
-    console.log("User in SideBar:", user)
-    console.log(user.photoURL)
 
     return (
         <div className="flex flex-col h-screen w-60 bg-logs2 text-black p-4">

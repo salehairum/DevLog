@@ -8,7 +8,7 @@ search_bp = Blueprint("search", __name__)
 
 @search_bp.route("/logs/search", methods=["POST"])
 @firebase_required
-def semantic_search_logs():
+def search_logs():
     """
     Semantic search logs by query text
     ---
@@ -45,7 +45,7 @@ def semantic_search_logs():
             "error": "Query text is required"
         }), 400
 
-    results = search_service.semantic_search(
+    results = search_service.hybrid_search(
         user_id=g.user["uid"],
         query=query,
         top_n=top_n,
