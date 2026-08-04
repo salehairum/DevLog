@@ -2,33 +2,42 @@ services:
   backend:
     image: salehaa/devlog-backend:f50b51
     container_name: devlog-backend
+
     env_file:
       - ./backend/.env
+
     volumes:
       - ./backend/firebase-service-account.json:/app/firebase-service-account.json:ro
-      - ./backend/chroma_persist:/app/chroma_persist 
-    ports:
-      - "5000:5000"
+      - ./backend/chroma_persist:/app/chroma_persist
+
+    expose:
+      - "5000"
+
     depends_on:
       - mongo
 
   frontend:
     image: salehaa/devlog-frontend:f50b51
     container_name: devlog-frontend
+
     env_file:
       - ./frontend/.env
+
     ports:
-      - "5173:80"
+      - "80:80"
+
     depends_on:
       - backend
 
   mongo:
     image: mongo:6
     container_name: devlog-mongodb
+
     volumes:
       - mongo_data:/data/db
-    ports:
-      - "27017:27017"
+
+    expose:
+      - "27017"
 
 volumes:
   mongo_data:

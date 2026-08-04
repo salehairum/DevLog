@@ -7,3 +7,4 @@ python-dotenv
 requests
 sentence-transformers
 chromadb 
+gunicorn
