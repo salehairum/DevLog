@@ -1,8 +1,9 @@
 from sentence_transformers import SentenceTransformer
 import chromadb
+from config.search import MODEL
 
 print("Loading SentenceTransformer...")
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+embedding_model = SentenceTransformer(MODEL)
 print("Embedding model loaded.")
 
 print("Connecting to ChromaDB...")
