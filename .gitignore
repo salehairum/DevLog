@@ -60,3 +60,5 @@ yarn-error.log*
 #extra
 curl_commands.txt
 firebase-service-account.json
+.terraform/
+terraform-apply-log
