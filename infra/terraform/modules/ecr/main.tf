@@ -20,13 +20,14 @@ resource "aws_ecr_lifecycle_policy" "repositories" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep only the latest ${var.keep_last_images} tagged images"
+
+        description = "Keep only the latest ${var.keep_last_images} tagged images"
 
         selection = {
-          tagStatus     = "tagged"
-          tagPrefixList = ["*"]
-          countType     = "imageCountMoreThan"
-          countNumber   = var.keep_last_images
+          tagStatus      = "tagged"
+          tagPatternList = ["*"]
+          countType      = "imageCountMoreThan"
+          countNumber    = var.keep_last_images
         }
 
         action = {
