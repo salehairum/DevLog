@@ -29,4 +29,27 @@ resource "aws_iam_role_policy_attachment" "ecr_read" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-# this role is to allow ec2 to pull and push from ecr and the like
+# this role is to allow ec2 to pull from ecr
+
+resource "aws_iam_role_policy" "parameter_store_read" {
+  name = "${var.role_name}-ParameterStoreRead"
+  role = aws_iam_role.ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Effect = "Allow"
+
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+
+        Resource = "arn:aws:ssm:us-east-1:${var.account_id}:parameter/devlog/production/*"
+      }
+    ]
+  })
+}

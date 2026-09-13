@@ -1,0 +1,144 @@
+---
+- name: Deploy DevLog
+  hosts: devlog
+  become: true
+
+  vars:
+    deploy_dir: /opt/devlog
+    aws_region: us-east-1
+    project_name: devlog
+
+    backend_image_tag: "{{ backend_tag }}"
+    frontend_image_tag: "{{ frontend_tag }}"
+
+    backend_env_parameter: "/{{ project_name }}/production/backend/env"
+    frontend_env_parameter: "/{{ project_name }}/production/frontend/env"
+    firebase_parameter: "/{{ project_name }}/production/backend/firebase-service-account"
+
+  tasks:
+
+    # ---------------------------------------------------------
+    # Deployment directories
+    # ---------------------------------------------------------
+
+    - name: Create backend deployment directory
+      ansible.builtin.file:
+        path: "{{ deploy_dir }}/backend"
+        state: directory
+        owner: root
+        group: docker
+        mode: "0775"
+
+    - name: Create frontend deployment directory
+      ansible.builtin.file:
+        path: "{{ deploy_dir }}/frontend"
+        state: directory
+        owner: root
+        group: docker
+        mode: "0775"
+
+    # ---------------------------------------------------------
+    # Retrieve configuration from Parameter Store
+    # ---------------------------------------------------------
+
+    - name: Retrieve backend environment
+      ansible.builtin.command:
+        cmd: >
+          aws ssm get-parameter
+          --name "{{ backend_env_parameter }}"
+          --with-decryption
+          --region "{{ aws_region }}"
+          --query "Parameter.Value"
+          --output text
+      register: backend_env
+      changed_when: false
+      no_log: true
+
+    - name: Retrieve frontend environment
+      ansible.builtin.command:
+        cmd: >
+          aws ssm get-parameter
+          --name "{{ frontend_env_parameter }}"
+          --with-decryption
+          --region "{{ aws_region }}"
+          --query "Parameter.Value"
+          --output text
+      register: frontend_env
+      changed_when: false
+      no_log: true
+
+    - name: Retrieve Firebase service account
+      ansible.builtin.command:
+        cmd: >
+          aws ssm get-parameter
+          --name "{{ firebase_parameter }}"
+          --with-decryption
+          --region "{{ aws_region }}"
+          --query "Parameter.Value"
+          --output text
+      register: firebase_service_account
+      changed_when: false
+      no_log: true
+
+    # ---------------------------------------------------------
+    # Write configuration files
+    # ---------------------------------------------------------
+
+    - name: Write backend environment
+      ansible.builtin.copy:
+        dest: "{{ deploy_dir }}/backend/.env"
+        content: "{{ backend_env.stdout }}"
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    - name: Write frontend environment
+      ansible.builtin.copy:
+        dest: "{{ deploy_dir }}/frontend/.env"
+        content: "{{ frontend_env.stdout }}"
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    - name: Write Firebase service account
+      ansible.builtin.copy:
+        dest: "{{ deploy_dir }}/backend/firebase-service-account.json"
+        content: "{{ firebase_service_account.stdout }}"
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    # ---------------------------------------------------------
+    # Render Docker Compose
+    # ---------------------------------------------------------
+
+    - name: Render Docker Compose configuration
+      ansible.builtin.template:
+        src: compose.yml.j2
+        dest: "{{ deploy_dir }}/compose.yaml"
+        owner: root
+        group: root
+        mode: "0644"
+
+    # ---------------------------------------------------------
+    # Pull and start application
+    # ---------------------------------------------------------
+
+    - name: Pull and start DevLog
+      community.docker.docker_compose_v2:
+        project_src: "{{ deploy_dir }}"
+        pull: always
+        state: present
+        recreate: auto
+
+    # ---------------------------------------------------------
+    # Docker image cleanup
+    # ---------------------------------------------------------
+
+    - name: Remove unused Docker images
+      ansible.builtin.command:
+        cmd: docker image prune -af --filter "until=72h"
+      changed_when: false

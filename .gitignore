@@ -62,3 +62,6 @@ curl_commands.txt
 firebase-service-account.json
 .terraform/
 terraform-apply-log
+checks.md
+.venv/
+populate-parameters.sh 

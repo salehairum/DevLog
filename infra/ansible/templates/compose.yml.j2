@@ -1,0 +1,46 @@
+services:
+  backend:
+    image: 977310685954.dkr.ecr.us-east-1.amazonaws.com/devlog-backend:{{ backend_image_tag }}
+    container_name: devlog-backend
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env
+
+    volumes:
+      - ./backend/firebase-service-account.json:/app/firebase-service-account.json:ro
+      - ./backend/chroma_persist:/app/chroma_persist
+
+    expose:
+      - "5000"
+
+    depends_on:
+      - mongo
+
+  frontend:
+    image: 977310685954.dkr.ecr.us-east-1.amazonaws.com/devlog-frontend:{{ frontend_image_tag }}
+    container_name: devlog-frontend
+    restart: unless-stopped
+
+    env_file:
+      - ./frontend/.env
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      - backend
+
+  mongo:
+    image: mongo:6
+    container_name: devlog-mongodb
+    restart: unless-stopped
+
+    volumes:
+      - mongo_data:/data/db
+
+    expose:
+      - "27017"
+
+volumes:
+  mongo_data:

@@ -3,3 +3,8 @@ variable "role_name" {
   type        = string
   default     = "DevLog-EC2-Role"
 }
+
+variable "account_id" {
+  description = "AWS account ID."
+  type        = string
+}

@@ -29,3 +29,8 @@ variable "oidc_provider_arn" {
   description = "ARN of the GitHub OIDC Provider."
   type        = string
 }
+
+variable "ansible_ssm_bucket_arn" {
+  description = "ARN of the S3 bucket used by Ansible's SSM connection plugin."
+  type        = string
+}
