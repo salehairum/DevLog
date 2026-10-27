@@ -2,6 +2,11 @@
 
 This directory contains the infrastructure and deployment configuration for DevLog.
 
+For a component-by-component explanation of the architecture, IAM/OIDC trust,
+Terraform resources, and Ansible responsibilities, see
+[ARCHITECTURE.md](./ARCHITECTURE.md). This README remains the operational guide
+for commands and setup.
+
 The infrastructure is split into four stages:
 
 ```text

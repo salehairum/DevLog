@@ -1,48 +1,88 @@
-```yaml
-name: Build and Push Docker Images
+
+name: Build and Deploy DevLog
 
 on:
   push:
     branches: ["main"]
+    paths:
+      - "backend/**"
+      - "frontend/**"
   workflow_dispatch:
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: write
-
     steps:
+      # 1. Check out the repository and its history
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
+      # 2. Generate a short commit SHA for Docker image tags
       - name: Get short commit SHA
         run: echo "SHORT_SHA=${GITHUB_SHA::6}" >> "$GITHUB_ENV"
 
-      - name: Detect changed components
+      # 3. Detect changed components and read current image tags
+      - name: Detect changes and load current tags
         id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            backend:
-              - 'backend/**'
-            frontend:
-              - 'frontend/**'
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            BEFORE="${{ github.event.before }}"
 
+            if [[ "$BEFORE" =~ ^0+$ ]]; then
+              CHANGED_FILES="$(git ls-tree -r --name-only "$GITHUB_SHA")"
+            else
+              CHANGED_FILES="$(git diff --name-only "$BEFORE" "$GITHUB_SHA")"
+            fi
+          else
+            # For a manual run, inspect the latest commit.
+            if git rev-parse HEAD^ >/dev/null 2>&1; then
+              CHANGED_FILES="$(git diff --name-only HEAD^ HEAD)"
+            else
+              CHANGED_FILES="$(git ls-tree -r --name-only HEAD)"
+            fi
+          fi
+
+          BACKEND_TAG="$(sed -n 's/^BACKEND_IMAGE_TAG=//p' deployment.env | tail -n 1)"
+          FRONTEND_TAG="$(sed -n 's/^FRONTEND_IMAGE_TAG=//p' deployment.env | tail -n 1)"
+
+          BUILD_BACKEND=false
+          BUILD_FRONTEND=false
+
+          if grep -q '^backend/' <<< "$CHANGED_FILES" || [[ -z "$BACKEND_TAG" ]]; then
+            BUILD_BACKEND=true
+          fi
+
+          if grep -q '^frontend/' <<< "$CHANGED_FILES" || [[ -z "$FRONTEND_TAG" ]]; then
+            BUILD_FRONTEND=true
+          fi
+
+          echo "backend=$BUILD_BACKEND" >> "$GITHUB_OUTPUT"
+          echo "frontend=$BUILD_FRONTEND" >> "$GITHUB_OUTPUT"
+
+          echo "Backend needs building: $BUILD_BACKEND"
+          echo "Frontend needs building: $BUILD_FRONTEND"
+
+      # 4. Authenticate to AWS using GitHub OIDC
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/devlog-GitHubActions
           aws-region: us-east-1
 
+      # 5. Log in to ECR
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # 6. Build and push the backend only when required
       - name: Build and push backend image
         if: steps.changes.outputs.backend == 'true'
         uses: docker/build-push-action@v6
@@ -50,9 +90,10 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/devlog-backend:latest
             ${{ steps.login-ecr.outputs.registry }}/devlog-backend:${{ env.SHORT_SHA }}
+            ${{ steps.login-ecr.outputs.registry }}/devlog-backend:latest
 
+      # 7. Build and push the frontend only when required
       - name: Build and push frontend image
         if: steps.changes.outputs.frontend == 'true'
         uses: docker/build-push-action@v6
@@ -60,28 +101,72 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/devlog-frontend:latest
             ${{ steps.login-ecr.outputs.registry }}/devlog-frontend:${{ env.SHORT_SHA }}
+            ${{ steps.login-ecr.outputs.registry }}/devlog-frontend:latest
 
-      - name: Update docker-compose.yml with changed image tags
+      # 8. Update the tags without changing the unchanged component
+      - name: Update deployment.env
         if: steps.changes.outputs.backend == 'true' || steps.changes.outputs.frontend == 'true'
-        env:
-          SHORT_SHA: ${{ env.SHORT_SHA }}
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          if [ "${{ steps.changes.outputs.backend }}" = "true" ]; then
-            sed -i -E "s|(${ECR_REGISTRY}/devlog-backend:)[a-zA-Z0-9._-]+|\1${SHORT_SHA}|g" compose.yml
+          if [[ "${{ steps.changes.outputs.backend }}" == "true" ]]; then
+            sed -i "s/^BACKEND_IMAGE_TAG=.*/BACKEND_IMAGE_TAG=${SHORT_SHA}/" deployment.env
           fi
 
-          if [ "${{ steps.changes.outputs.frontend }}" = "true" ]; then
-            sed -i -E "s|(${ECR_REGISTRY}/devlog-frontend:)[a-zA-Z0-9._-]+|\1${SHORT_SHA}|g" compose.yml
+          if [[ "${{ steps.changes.outputs.frontend }}" == "true" ]]; then
+            sed -i "s/^FRONTEND_IMAGE_TAG=.*/FRONTEND_IMAGE_TAG=${SHORT_SHA}/" deployment.env
           fi
 
-      - name: Commit and push updated compose.yml
+      # 9. Commit the updated deployment tags
+      - name: Commit and push deployment.env
         if: steps.changes.outputs.backend == 'true' || steps.changes.outputs.frontend == 'true'
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add compose.yml
-          git commit -m "Update compose.yml with image tags for ${{ env.SHORT_SHA }}" || echo "No changes to commit"
-          git push
+
+          if ! git diff --quiet -- deployment.env; then
+            git add deployment.env
+            git commit -m "Update deployment image tags for ${SHORT_SHA}"
+            git push
+          else
+            echo "deployment.env has no changes to commit."
+          fi
+
+      # 10. Install Ansible and its Python dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "ansible==14.5.0" boto3 botocore
+
+      # 11. Install the Session Manager plugin on the runner
+      - name: Install AWS Session Manager plugin
+        run: |
+          curl -fsSL \
+            "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" \
+            -o /tmp/session-manager-plugin.deb
+          sudo dpkg -i /tmp/session-manager-plugin.deb
+          session-manager-plugin
+
+      # 12. Install the Ansible collections used by the playbook
+      - name: Install Ansible collections
+        working-directory: infra/ansible
+        run: ansible-galaxy collection install -r requirements.yml
+
+      # 13. Read both tags and deploy through Ansible
+      - name: Deploy to EC2
+        working-directory: infra/ansible
+        run: |
+          BACKEND_TAG="$(sed -n 's/^BACKEND_IMAGE_TAG=//p' ../../deployment.env | tail -n 1)"
+          FRONTEND_TAG="$(sed -n 's/^FRONTEND_IMAGE_TAG=//p' ../../deployment.env | tail -n 1)"
+
+          if [[ -z "$BACKEND_TAG" || -z "$FRONTEND_TAG" ]]; then
+            echo "An image tag is missing from deployment.env."
+            exit 1
+          fi
+
+          ansible-playbook deploy.yml \
+            -e "backend_tag=${BACKEND_TAG} frontend_tag=${FRONTEND_TAG}"
