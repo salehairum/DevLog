@@ -64,4 +64,3 @@ firebase-service-account.json
 terraform-apply-log
 checks.md
 .venv/
-populate-parameters.sh 
