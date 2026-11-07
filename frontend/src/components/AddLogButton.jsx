@@ -17,7 +17,7 @@ export function AddLogButton({ onClick }) {
             >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            Add a Log
+            Add New Log
         </button>
     );
 }
